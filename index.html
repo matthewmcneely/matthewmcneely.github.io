@@ -1,85 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>JSON Tree</title>
-  <style>
-    .tree {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    .tree li {
-      display: inline-block;
-      position: relative;
-    }
-
-    .tree li:before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -10px;
-      width: 10px;
-      height: 10px;
-      border-radius: 5px;
-      background-color: black;
-    }
-
-    .tree li:after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -5px;
-      width: 5px;
-      height: 10px;
-      border-right: 1px solid black;
-    }
-
-    .tree li:last-child:after {
-      border-right: none;
-    }
-
-    .tree li:hover {
-      background-color: #ccc;
-    }
-  </style>
+    <title>JSON to Tree Viewer</title>
+    <style>
+        .tree ul {
+            list-style-type: none;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .tree li {
+            margin: 5px;
+        }
+    </style>
 </head>
 <body>
-  <div id="tree"></div>
 
-  <script async>
-    // Load the JSON file
-    async function loadJSON(url) {
-      const response = await fetch(url);
-      const json = await response.json();
-      return json;
-    }
+    <h1>JSON to Tree Viewer</h1>
+    <div id="tree" class="tree"></div>
 
-    // Display the JSON data in a tree
-    function displayTree(json, element) {
-      const list = document.createElement('ul');
-      list.classList.add('tree');
-
-      for (const key in json) {
-        const li = document.createElement('li');
-        li.textContent = key;
-
-        if (typeof json[key] === 'object') {
-          displayTree(json[key], li);
+    <script>
+        async function fetchJSON() {
+            try {
+                // Fetch the JSON data from the remote URL
+                const response = await fetch('https://raw.githubusercontent.com/matthewmcneely/profile/main/profile.json');
+                const jsonData = await response.json();
+                
+                // Convert JSON data to tree and append to the div
+                document.getElementById('tree').appendChild(jsonToTree(jsonData));
+            } catch (error) {
+                console.error('An error occurred:', error);
+            }
         }
 
-        list.appendChild(li);
-      }
+        function jsonToTree(jsonData, ulElement = document.createElement('ul')) {
+            for (const [key, value] of Object.entries(jsonData)) {
+                const liElement = document.createElement('li');
+                
+                if (typeof value === 'object' && value !== null) {
+                    liElement.textContent = `${key}: `;
+                    liElement.appendChild(jsonToTree(value));
+                } else {
+                    liElement.textContent = `${key}: ${value}`;
+                }
+                
+                ulElement.appendChild(liElement);
+            }
+            
+            return ulElement;
+        }
+        
+        // Fetch and display the JSON data when the page loads
+        window.onload = fetchJSON;
+    </script>
 
-      element.appendChild(list);
-    }
-
-    // Get the JSON data and display it in the tree
-    const url = 'https://raw.githubusercontent.com/matthewmcneely/profile/main/profile.json';
-    const json = await loadJSON(url);
-    const treeElement = document.getElementById('tree');
-    displayTree(json, treeElement);
-  </script>
 </body>
 </html>
+
 
