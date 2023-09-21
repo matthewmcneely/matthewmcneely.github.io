@@ -1,1 +1,85 @@
-"Hello world"
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JSON Tree</title>
+  <style>
+    .tree {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .tree li {
+      display: inline-block;
+      position: relative;
+    }
+
+    .tree li:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -10px;
+      width: 10px;
+      height: 10px;
+      border-radius: 5px;
+      background-color: black;
+    }
+
+    .tree li:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -5px;
+      width: 5px;
+      height: 10px;
+      border-right: 1px solid black;
+    }
+
+    .tree li:last-child:after {
+      border-right: none;
+    }
+
+    .tree li:hover {
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div id="tree"></div>
+
+  <script>
+    // Load the JSON file
+    async function loadJSON(url) {
+      const response = await fetch(url);
+      const json = await response.json();
+      return json;
+    }
+
+    // Display the JSON data in a tree
+    function displayTree(json, element) {
+      const list = document.createElement('ul');
+      list.classList.add('tree');
+
+      for (const key in json) {
+        const li = document.createElement('li');
+        li.textContent = key;
+
+        if (typeof json[key] === 'object') {
+          displayTree(json[key], li);
+        }
+
+        list.appendChild(li);
+      }
+
+      element.appendChild(list);
+    }
+
+    // Get the JSON data and display it in the tree
+    const url = 'https://raw.githubusercontent.com/matthewmcneely/profile/main/profile.json';
+    const json = await loadJSON(url);
+    const treeElement = document.getElementById('tree');
+    displayTree(json, treeElement);
+  </script>
+</body>
+</html>
+
