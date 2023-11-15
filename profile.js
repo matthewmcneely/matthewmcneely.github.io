@@ -1604,14 +1604,11 @@ var user = {
   "availabilities": [
     {
       "id": "0x125d8",
-      "description": "Interim/Fractional CTO; Golang programming; graph database design; knowledge graphs; dgraph; MVPs/prototypes, langchain/LLMs",
+      "description": "Interim/Fractional CTO; Golang programming; graph database design; knowledge graphs; dgraph; MVPs/prototypes, langchain/LLMs, vector stores",
       "active": true,
       "startDate": "2023-10-30T12:00:00Z",
-      "minWage": 140,
-      "wageCurrency": "USD",
       "employmentType": "CORP_TO_CORP",
       "minWeeklyHours": 10,
-      "maxWeeklyHours": 25,
       "remote": true,
       "location": {
         "created": null,
