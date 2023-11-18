@@ -1,0 +1,102 @@
+MATTHEW MCNEELY
+SOFTWARE CONSULTANT; FRACTIONAL/INTERIM CTO
+matthew.mcneely@gmail.com
++1 603-216-7071
+
+PROFESSIONAL SUMMARY
+
+A life-long learner, I've worked for small and large companies. I've been a programmer, a principal engineer, an architect, a director, a vice president and a founder. I'm happiest when I'm working with a high functioning, slightly irreverent team.
+
+Golang, Python, C, distributed architecture design and implementation, Dgraph, Postgres, gRPC, microservices, retrieval augmented generation, Chroma, langchain, OpenAI SDK, Ollama, local LLMs
+
+Some other things that I do/have done:
+
+* Product innovation and architecture
+* Investing/technical advising
+* Team building & remote development practices
+* Engineering representation at business level meetings (customer meetings, directors meetings, acquisition talks, fundraising, etc.)
+* Technical evaluation of technology for acquisition/Preparation of technology for acquisition
+
+EMPLOYMENT HISTORY
+
+2017 - PRESENT | Software Consultant; Interim/Fractional CTO; Investor/Advisor, Independent
+* For Dgraph Labs, helped new engineering team get up to speed with Go and the codebase; fixed issues; helped customers with technical issues [Go, Dgraph, RDF, JSON, Github]
+* For lepointdevente.com, helped move a relational database to graph-based store [Go, JS, RDF, Dgraph, OpenAPI]
+* For Huski.ai, helped move a relational and ES-based database to a graph-based store [Go, Dgraph, RDF]
+* For Limina.com, implemented pub/sub and websocket functionality [Go, Dgraph]
+* For Rampart Cryptocurrency Exchange, part of a engineering team that built a distributed, highly-scalable crypto exchange [Go, grpc, Redis, Postgres, microservices]
+* For Ofte, designed and implemented a continuous authentication system using FIDO2 [Go, embedded C]
+* For Sight Machine, invested and advised
+* For fi.tt, invested and advised as fractional CTO
+* For Airbug, served as an advisor
+
+2018 - 2020 | Co-Founder, Ofte, USA
+Ofte is a patented, FIDO2-compliant, hardware-based authentication platform that implements continuous authentication. It's designed to be easy for people to use, and easy for developers to integrate into existing applications.
+The continuous authentication aspect of the platform provides a number of advantages over many other MFA solutions [golang, FIDO, postgres]
+
+We created the Ofte Platform so that web application developers and the people who use those apps can be very well protected from evil-doers, with an absolute minimum amount of hair-pulling.
+Parts of the Ofte tech stack were open-sourced: https://github.com/ofte-auth/
+
+2017 - 2019 | Consulting Backend Engineer - Golang, Rampart Cryptocurrency Exchange
+Part of a global, remote team building a secure and scalable cryptocurrency exchange. Wearing many hats but focused on security and exchange mechanics [golang, MFA/2FA, FIDO, U2F, TOTP. Bitcoin, Ethereum, exchange mechanics. Microservices, REST, grpc, etcd, NATS, Redis]
+
+2014 - 2017 | Founder, Programmer, NimbleIndustry.com, Greater Boston Area
+Open source technology bridged the gap between industrial equipment and the Industrial Internet (IIoT). NimbleIndustry solved the problem of overly complex IIoT integrations by letting machines roll out of factories ready to emit data compatible with standard IIoT protocols.
+Code open-sourced at https://github.com/nimbleindustry/device
+
+2011 - 2013 | Director of Engineering, Brand Solutions and Sprout Platform, InMobi, Remote
+As the Director of Engineering, Brand Solutions and Sprout Platform at InMobi, I led the expanded and globally distributed "InMobi Studio" team. We successfully integrated our technology into the InMobi infrastructure and contributed many best practices into InMobi's engineering DNA.
+But most importantly, I led a highly functional, distributed engineering team that produced a best-in-class, cloud-based platform that allowed designers to create award-winning content.
+
+2008 - 2010 | VP Engineering, Sprout, Remote
+I led the engineering team at Sprout. Having co-authored the original Sprout platform, I primarily dwelled in the core inner-workings of the platform, focusing on issues such as Sprout’s XML representation and geometric models and algorithms for animations. I also performed much of the research work that the Sprout engineering department undertook. My efforts in this aspect of my responsibilities led to numerous advancements in the company's offerings, including the HTML5/mobile generation of ad content.
+I also led the metrics efforts for the platform and managed technical relationships with partners such as Google, DoubleClick and Adobe. But most importantly, I led a highly functional, distributed engineering team that produced a best-in-class, cloud-based platform that allowed designers to create award-winning content.
+
+1995 - 2007 | Consultant, The Boston Bit Co, Boston & Remote
+* Contractor for Microsoft, I created a realtime Flash Actionscript environment for the presentation of XPLANE artwork in an animated pseudo 3D environment. [Actionscript 2.0, OOD, XML, XSD]
+* Consultant for OpenBook Systems, I updated and maintained various features of Grangers, a large-scale searchable online database of poetry. [Java, J2EE, Struts, mysql, JDBC, servlets, XML, Lucene, Castor]
+* Consultant for British Petroleum (contract through XPLANE), I created interactive visual learning applications using object-oriented Actionscript and XML. [Actionscript 2.0, OOD, XML, XSD]
+* Interim CTO/Architect for Newfields Network, I designed and built the flyingOX web service — a web service for the management and scheduling of events and resources. This service was designed within the J2EE architecture. I conceived and developed distributed scheduling algorithms based on the Contract Net Protocol. I created XML schemas for common scheduling objects. I created comprehensive unit test programs. [Java, J2EE, Postgresql, AXIS, Resin, C++, Actionscript, SOAP, XML, XML Schema, .NET, C#, UML]
+* Consultant for Wiznet (wiznet.com), I created an XML-based (J2EE) management application and made improvements in their existing J2EE architecture including the welcomed elimination and replacement of an unwieldy hierarchy construct with a very efficient one. [Java, J2EE, Oracle, XML, XML Schema, UML]
+
+1998 - 2000 | Interim Head of Engineering, Syncra Software, Boston & Remote
+For Syncra Software ERP (acquired by Oracle), I led a four person development team, my duties included coordinating development efforts, providing architectural direction, managing new versions and releases, working with support to resolve customer matters, developing and managing project plans. I led the technical efforts in preparing Syncra’s assets for acquisition, including preparing technical documents and presenting the architecture and team members to potential acquirers. [Java, J2EE, EJB, Weblogic, XML, Struts, Oracle]
+
+1995 - 1997 | Principal Software Engineer, ON Technology, Cambridge, MA
+Meeting Maker team member, responsible for UNIX platforms (both server and Motif-based UI), networking, and Win32 user interface.
+
+1990 - 1995 | Principal Software Engineer, Recital, Danvers, MA
+Chief Architect, commercial database management software. Led the development of a GUI version of the software on UNIX/X-Windows.
+
+1989 - 1990 | Programmer/Analyst, Unisys, Hanscom AFB
+Security applications for USAF
+
+1986 - 1989 | Chief Computer, Fire Direction, US Army, Ft Stewart, GA
+Served as chief computer for the Army's first MLRS unit to live-fire over civilian population. Led squad of 5-7 soldiers. Ensured unit's combat readiness, as member of 24th Infantry Division, an Army Rapid Deployment Force.
+
+EDUCATION
+1989 - 1991
+Computer Science, Northeastern University
+1986 - 1988
+Computer Science, Embry-Riddle Aeronautical University
+1984 - 1985
+English, Liberal Arts, Saint Leo University
+
+SKILLS
+
+Golang/Python/C/Javascript
+Dgraph, Postgres, Redis, Mysql
+RAG, Langchain, Ollama, LLama, "local" LLMs, Evolutionary Prorgramming
+GraphQL, REST, FIDO, gRPC
+AWS, GCP
+System Architecture/Distributed Architecture Design and Implementation
+Engineering Leadership
+Knowledge Graphs
+Node, Svelte, VueJS
+Graphistry, Cytoscape
+
+LINKS
+
+Online Profile: https://matthewmcneely.github.io
+Github: https://github.com/matthewmcneely
+LinkedIN: https://linkedin.com/in/matthewmcneely
