@@ -137,7 +137,7 @@ var user = {
     {
       "id": "0x1250e",
       "displayPosition": 6,
-      "line": "Current Interests: graph databases, graph theory, knowledge graphs; Golang, Dgraph, Svelte, langchain",
+      "line": "Current Interests: graph databases, graph theory, knowledge graphs to support AI, Golang, Dgraph",
       "created": "2022-01-11T19:44:46.535Z",
       "modified": "2023-01-27T16:03:22.917Z"
     }
