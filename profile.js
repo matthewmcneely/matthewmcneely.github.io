@@ -1275,7 +1275,7 @@ var user = {
     {
       "id": "0x12564",
       "displayPosition": 1,
-      "title": "Advisor, Investor, Interim/Fractional CTO",
+      "title": "Consultant, Advisor, Investor, Interim/Fractional CTO",
       "organization": {
         "id": "0x12562",
         "name": "None"
@@ -1289,17 +1289,22 @@ var user = {
         {
           "id": "0x1a3a33",
           "displayPosition": 1,
-          "description": "For dgraph, helped new engineering team get up to speed with Go and the codebase; fixed issues; helped customers with technical issues [Go, RDF, JSON, Github]"
+          "description": "For Dgraph (Dgraph Labs, Hypermode, Istari Digital), helped new engineering team, added functionality, fixed issues, helped customers with technical issues, conducted training [Go, python, RDF, JSON, Dgraph, DQL, GraphQL]"
         },
         {
           "id": "0x1a3a34",
           "displayPosition": 2,
-          "description": "For lepointdevente.com, helped move a relational database to graph-based store [Go, JS, RDF, OpenAPI]"
+          "description": "For twinlabs.ai, helped build the digital twin graph underlying data service [Go, JS, RDF, Dgraph, python]"
+        },
+        {
+          "id": "0x1a3a34a",
+          "displayPosition": 2,
+          "description": "For lepointdevente.com, helped move a relational database to graph-based store [Go, JS, RDF, OpenAPI, Dgraph]"
         },
         {
           "id": "0x1a3a35",
           "displayPosition": 3,
-          "description": "For Huski.ai, helped move a relational and ES-based database to a graph-based store [Go, RDF]"
+          "description": "For Huski.ai, helped move a relational and ES-based database to a graph-based store [Go, RDF, Dgraph]"
         },
         {
           "id": "0x1a3a36",
@@ -1604,9 +1609,9 @@ var user = {
   "availabilities": [
     {
       "id": "0x125d8",
-      "description": "Interim/Fractional CTO; Golang programming; graph database design; knowledge graphs; dgraph; MVPs/prototypes, langchain/LLMs, vector stores",
+      "description": "Interim/Fractional CTO; Golang and python programming; graph database design; knowledge graphs; dgraph; MVPs/prototypes, langchain/LLMs, vector stores",
       "active": true,
-      "startDate": "2023-10-30T12:00:00Z",
+      "startDate": "2025-12-01T12:00:00Z",
       "employmentType": "CORP_TO_CORP",
       "minWeeklyHours": 10,
       "remote": true,
