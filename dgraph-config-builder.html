@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dgraph Configuration Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dgraph: { 50: '#f0f4ff', 100: '#dbe4ff', 200: '#bac8ff', 400: '#748ffc', 500: '#4c6ef5', 600: '#3b5bdb', 700: '#364fc7', 800: '#1e3a8a', 900: '#1e2a5e' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .tooltip-trigger:hover .tooltip-content { display: block; }
+    .tab-active { border-bottom: 2px solid #4c6ef5; color: #4c6ef5; font-weight: 600; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #4c6ef5; cursor: pointer; }
+    input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #4c6ef5; cursor: pointer; border: none; }
+    .copy-feedback { animation: fadeout 1.5s forwards; }
+    @keyframes fadeout { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+<div id="app" class="max-w-5xl mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-dgraph-700">Dgraph Configuration Builder</h1>
+    <p class="text-gray-500 mt-1">Generate tuned <code class="bg-gray-100 px-1 rounded text-sm">dgraph alpha</code> and <code class="bg-gray-100 px-1 rounded text-sm">dgraph zero</code> commands based on your hardware.</p>
+  </div>
+
+  <!-- Hardware Inputs -->
+  <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4">Hardware Resources</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">CPU Cores</label>
+        <input type="number" id="cpuCores" min="1" max="256" value="8"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        <p class="text-xs text-gray-400 mt-1">Available CPU cores for Dgraph</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">RAM (GB)</label>
+        <input type="number" id="ramGB" min="1" max="4096" value="32"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        <p class="text-xs text-gray-400 mt-1">Total available memory</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-600 mb-1">Disk Space (GB)</label>
+        <input type="number" id="diskGB" min="10" max="65536" value="500"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        <p class="text-xs text-gray-400 mt-1">Available disk for Dgraph data</p>
+      </div>
+    </div>
+
+    <div class="mt-6">
+      <label class="block text-sm font-medium text-gray-600 mb-2">
+        Workload Profile: <span id="workloadLabel" class="text-dgraph-600 font-semibold">Balanced (50% reads / 50% writes)</span>
+      </label>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-500 w-20 text-right">Write-heavy</span>
+        <input type="range" id="readPct" min="10" max="95" value="50" step="5"
+               class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+        <span class="text-xs text-gray-500 w-20">Read-heavy</span>
+      </div>
+      <div class="flex justify-between text-xs text-gray-400 mt-1 px-20">
+        <span>10%</span><span>50%</span><span>95%</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tabs -->
+  <div class="flex border-b border-gray-200 mb-0">
+    <button id="tabAlpha" class="px-5 py-3 text-sm tab-active cursor-pointer" onclick="switchTab('alpha')">Alpha Configuration</button>
+    <button id="tabZero" class="px-5 py-3 text-sm text-gray-500 hover:text-gray-700 cursor-pointer" onclick="switchTab('zero')">Zero Configuration</button>
+  </div>
+
+  <!-- Alpha Config -->
+  <div id="panelAlpha" class="bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-gray-200 border-t-0">
+    <!-- Network -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Network</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Zero Address(es)</label>
+          <input type="text" id="alphaZero" value="localhost:5080" placeholder="localhost:5080"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">My Address</label>
+          <input type="text" id="alphaMy" value="" placeholder="auto-detect"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Port Offset</label>
+          <input type="number" id="alphaPortOffset" value="0" min="0" max="65000"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Directories -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Directories</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Postings</label>
+          <input type="text" id="alphaPostings" value="p"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">WAL</label>
+          <input type="text" id="alphaWal" value="w"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Temp</label>
+          <input type="text" id="alphaTemp" value="t"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Export</label>
+          <input type="text" id="alphaExport" value="export"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Badger (auto-tuned) -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-2">Badger Storage Engine
+        <span class="text-xs font-normal text-dgraph-500 ml-2 bg-dgraph-50 px-2 py-0.5 rounded-full">auto-tuned from hardware</span>
+      </h3>
+      <p class="text-xs text-gray-400 mb-4">These values are computed from your hardware and workload profile. Override as needed.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Compression</label>
+          <select id="badgerCompression"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none bg-white">
+            <option value="snappy">snappy (fast)</option>
+            <option value="zstd:1">zstd:1 (balanced)</option>
+            <option value="zstd:3">zstd:3 (better ratio)</option>
+            <option value="zstd:6">zstd:6 (high ratio)</option>
+            <option value="none">none (fastest, no compression)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Stream Goroutines</label>
+          <input type="number" id="badgerNumGoroutines" min="1" max="128" value="8"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Memtable Size (MB)</label>
+          <input type="number" id="badgerMemtableSize" min="8" max="1024" value="64"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Larger = fewer writes to disk, more RAM per memtable</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Num Memtables</label>
+          <input type="number" id="badgerNumMemtables" min="2" max="20" value="5"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Pending memtables before stalling writes</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Base Table Size (MB)</label>
+          <input type="number" id="badgerBaseTableSize" min="1" max="256" value="2"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">SSTable size at L0</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Base Level Size (MB)</label>
+          <input type="number" id="badgerBaseLevelSize" min="5" max="1024" value="10"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Total data size at L1</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Num Compactors</label>
+          <input type="number" id="badgerNumCompactors" min="1" max="32" value="4"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Concurrent compaction goroutines</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Block Size (KB)</label>
+          <input type="number" id="badgerBlockSize" min="1" max="64" value="4"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">SSTable block size</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Bloom False Positive</label>
+          <input type="number" id="badgerBloomFP" min="0.001" max="0.1" step="0.001" value="0.01"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Lower = more memory, fewer false reads</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">L0 Tables (stall at)</label>
+          <input type="number" id="badgerL0Stall" min="5" max="60" value="15"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Stall writes when L0 tables exceed this</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">L0 Tables (compact at)</label>
+          <input type="number" id="badgerL0Compact" min="2" max="30" value="5"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+          <p class="text-xs text-gray-400 mt-0.5">Trigger compaction when L0 tables exceed this</p>
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="badgerSyncWrites" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Sync Writes (fsync every write)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cache -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-2">Cache
+        <span class="text-xs font-normal text-dgraph-500 ml-2 bg-dgraph-50 px-2 py-0.5 rounded-full">auto-tuned from hardware</span>
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Total Cache Size (MB): <span id="cacheSizeLabel" class="text-dgraph-600 font-semibold"></span></label>
+          <input type="range" id="cacheSizeMB" min="256" max="131072" value="4096" step="256"
+                 class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+          <div class="flex justify-between text-xs text-gray-400 mt-1">
+            <span>256 MB</span><span id="cacheMaxLabel"></span>
+          </div>
+        </div>
+        <div class="flex items-center">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="cacheRemoveOnUpdate" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <div>
+              <span class="text-xs font-medium text-gray-500">Remove on Update</span>
+              <p class="text-xs text-gray-400">~14% faster writes, slightly slower first read after mutation</p>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div class="mt-4">
+        <label class="block text-xs font-medium text-gray-500 mb-2">Cache Allocation</label>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">PostingList Cache: <span id="plCachePctLabel" class="font-semibold text-gray-600"></span>%</label>
+            <input type="range" id="plCachePct" min="10" max="80" value="40" step="5"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+            <p class="text-xs text-gray-400 mt-0.5" id="plCacheMB"></p>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Block Cache: <span id="blockCachePctLabel" class="font-semibold text-gray-600"></span>%</label>
+            <input type="range" id="blockCachePct" min="10" max="80" value="40" step="5"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+            <p class="text-xs text-gray-400 mt-0.5" id="blockCacheMB"></p>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">Index Cache: <span id="indexCachePctLabel" class="font-semibold text-gray-600"></span>%</label>
+            <input type="range" id="indexCachePct" min="5" max="50" value="20" step="5"
+                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" />
+            <p class="text-xs text-gray-400 mt-0.5" id="indexCacheMB"></p>
+          </div>
+        </div>
+        <p class="text-xs mt-2" id="cachePctWarning"></p>
+      </div>
+    </div>
+
+    <!-- Raft -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Raft Consensus</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Snapshot After Entries</label>
+          <input type="number" id="raftSnapshotEntries" value="10000" min="100" max="1000000"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Snapshot After Duration</label>
+          <input type="text" id="raftSnapshotDuration" value="30m"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Pending Proposals</label>
+          <input type="number" id="raftPendingProposals" value="256" min="16" max="4096"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="raftLearner" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Learner (read-only replica)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Limits -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Query &amp; Mutation Limits</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Query Edge Limit</label>
+          <input type="number" id="limitQueryEdge" value="1000000" min="1000"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Normalize Node Limit</label>
+          <input type="number" id="limitNormalizeNode" value="10000" min="100"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Mutations Mode</label>
+          <select id="limitMutations"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none bg-white">
+            <option value="allow">allow</option>
+            <option value="disallow">disallow (read-only)</option>
+            <option value="strict">strict (known predicates only)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Max NQuads per Mutation</label>
+          <input type="number" id="limitMutationsNquad" value="1000000" min="1000"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Max Pending Queries</label>
+          <input type="number" id="limitMaxPending" value="10000" min="100"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Query Timeout</label>
+          <input type="text" id="limitQueryTimeout" value="0ms" placeholder="0ms (no timeout)"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Max Retries</label>
+          <input type="number" id="limitMaxRetries" value="10" min="-1" max="1000"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Txn Abort After</label>
+          <input type="text" id="limitTxnAbort" value="5m"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="limitDisallowDrop" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Disallow Drop</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Security</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Auth Token</label>
+          <input type="text" id="securityToken" value="" placeholder="(none)"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">IP Whitelist</label>
+          <input type="text" id="securityWhitelist" value="" placeholder="(any)"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Survival, Telemetry, Global -->
+    <div class="p-6">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Other</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Survive Mode</label>
+          <select id="alphaSurvive"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none bg-white">
+            <option value="process">process</option>
+            <option value="filesystem">filesystem</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="alphaBindall" checked class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Bind All Interfaces</span>
+          </label>
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="alphaTelemetry" checked class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Telemetry Reports</span>
+          </label>
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="alphaMcp" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">MCP Server</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zero Config -->
+  <div id="panelZero" class="bg-white rounded-b-xl rounded-tr-xl shadow-sm border border-gray-200 border-t-0 hidden">
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Network</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">My Address</label>
+          <input type="text" id="zeroMy" value="" placeholder="auto-detect"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Peer Address</label>
+          <input type="text" id="zeroPeer" value="" placeholder="(none - first zero)"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Port Offset</label>
+          <input type="number" id="zeroPortOffset" value="0" min="0" max="65000"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Cluster</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Replicas</label>
+          <select id="zeroReplicas"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none bg-white">
+            <option value="1">1 (no replication)</option>
+            <option value="3">3 (recommended)</option>
+            <option value="5">5 (high availability)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Rebalance Interval</label>
+          <input type="text" id="zeroRebalance" value="8m"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">WAL Directory</label>
+          <input type="text" id="zeroWal" value="zw"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Cluster ID</label>
+          <input type="text" id="zeroCid" value="" placeholder="(auto)"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Raft</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Raft ID (idx)</label>
+          <input type="text" id="zeroRaftIdx" value="" placeholder="auto-assign"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="zeroRaftLearner" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Learner (read-only)</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-b border-gray-100">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Rate Limiting</h3>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">UID Lease Limit (0=unlimited)</label>
+          <input type="number" id="zeroUidLease" value="0" min="0"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Refill Interval</label>
+          <input type="text" id="zeroRefillInterval" value="30s"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none" />
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="zeroDisableAdminHttp" class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Disable Admin HTTP</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6">
+      <h3 class="text-md font-semibold text-gray-700 mb-4">Other</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1">Survive Mode</label>
+          <select id="zeroSurvive"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-dgraph-400 focus:border-dgraph-400 outline-none bg-white">
+            <option value="process">process</option>
+            <option value="filesystem">filesystem</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="zeroBindall" checked class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Bind All</span>
+          </label>
+        </div>
+        <div class="flex items-end">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="zeroTelemetry" checked class="w-4 h-4 text-dgraph-500 rounded border-gray-300 focus:ring-dgraph-400" />
+            <span class="text-xs font-medium text-gray-500">Telemetry</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tuning Rationale -->
+  <div id="tuningRationale" class="bg-dgraph-50 border border-dgraph-200 rounded-xl p-4 mt-6 mb-6">
+    <h3 class="text-sm font-semibold text-dgraph-700 mb-2">Auto-Tuning Rationale</h3>
+    <ul id="rationaleList" class="text-xs text-dgraph-800 space-y-1 list-disc list-inside"></ul>
+  </div>
+
+  <!-- Output Commands -->
+  <section class="bg-gray-900 rounded-xl shadow-lg p-6 mt-6 sticky bottom-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-gray-300">Generated Commands</h2>
+      <button onclick="copyAll()" id="copyBtn"
+              class="text-xs bg-dgraph-600 hover:bg-dgraph-700 text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+        Copy All
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">dgraph alpha</label>
+        <textarea id="outputAlpha" readonly rows="3"
+                  class="w-full bg-gray-800 text-green-400 font-mono text-xs p-3 rounded-lg border border-gray-700 resize-none focus:outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">dgraph zero</label>
+        <textarea id="outputZero" readonly rows="2"
+                  class="w-full bg-gray-800 text-green-400 font-mono text-xs p-3 rounded-lg border border-gray-700 resize-none focus:outline-none"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-gray-400 mt-8 mb-4">
+    Dgraph Configuration Builder &mdash; Generated flags target Dgraph v25.3.0
+  </footer>
+</div>
+
+<script>
+// ── Defaults (to suppress from output when unchanged) ──────────────────────
+const ALPHA_DEFAULTS = {
+  zero: 'localhost:5080', my: '', port_offset: 0,
+  postings: 'p', wal: 'w', tmp: 't', export: 'export',
+  badger: { compression: 'snappy', numgoroutines: 8 },
+  cache: { 'size-mb': 4096, percentage: '40,40,20', 'remove-on-update': false },
+  raft: { learner: false, 'snapshot-after-entries': 10000, 'snapshot-after-duration': '30m', 'pending-proposals': 256 },
+  security: { token: '', whitelist: '' },
+  limit: {
+    'query-edge': 1000000, 'normalize-node': 10000, mutations: 'allow',
+    'mutations-nquad': 1000000, 'disallow-drop': false, 'max-pending-queries': 10000,
+    'query-timeout': '0ms', 'max-retries': 10, 'txn-abort-after': '5m'
+  },
+  survive: 'process', bindall: true, telemetry: { reports: true }, mcp: false
+};
+
+const ZERO_DEFAULTS = {
+  my: '', peer: '', port_offset: 0, wal: 'zw', replicas: 1,
+  rebalance_interval: '8m', cid: '',
+  raft: { idx: '', learner: false },
+  limit: { 'uid-lease': 0, 'refill-interval': '30s', 'disable-admin-http': false },
+  survive: 'process', bindall: true, telemetry: { reports: true }
+};
+
+// ── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('panelAlpha').classList.toggle('hidden', tab !== 'alpha');
+  document.getElementById('panelZero').classList.toggle('hidden', tab !== 'zero');
+  document.getElementById('tabAlpha').classList.toggle('tab-active', tab === 'alpha');
+  document.getElementById('tabZero').classList.toggle('tab-active', tab === 'zero');
+  document.getElementById('tabAlpha').classList.toggle('text-gray-500', tab !== 'alpha');
+  document.getElementById('tabZero').classList.toggle('text-gray-500', tab !== 'zero');
+}
+
+// ── Auto-tuning logic ───────────────────────────────────────────────────────
+function autoTune() {
+  const cpuCores = clampInt('cpuCores', 1, 256);
+  const ramGB = clampInt('ramGB', 1, 4096);
+  const diskGB = clampInt('diskGB', 10, 65536);
+  const readPct = parseInt(el('readPct').value);
+  const writePct = 100 - readPct;
+  const rationale = [];
+
+  // ── Workload label
+  let profileName;
+  if (readPct >= 75) profileName = 'Read-heavy';
+  else if (readPct <= 25) profileName = 'Write-heavy';
+  else profileName = 'Balanced';
+  el('workloadLabel').textContent = `${profileName} (${readPct}% reads / ${writePct}% writes)`;
+
+  // ── Badger tuning ──
+
+  // Compression: write-heavy prefers snappy (faster), read-heavy can use zstd for smaller SSTables
+  if (diskGB < 100) {
+    el('badgerCompression').value = 'zstd:3';
+    rationale.push('Compression set to zstd:3 due to limited disk space (' + diskGB + 'GB) — prioritize compression ratio.');
+  } else if (readPct >= 70) {
+    el('badgerCompression').value = 'zstd:1';
+    rationale.push('Compression set to zstd:1 — read-heavy workloads benefit from smaller SSTables (better cache efficiency).');
+  } else if (writePct >= 70) {
+    el('badgerCompression').value = 'snappy';
+    rationale.push('Compression set to snappy — write-heavy workloads need fast compression/decompression.');
+  } else {
+    el('badgerCompression').value = 'snappy';
+    rationale.push('Compression set to snappy — good balance of speed and ratio for balanced workloads.');
+  }
+
+  // NumGoroutines: scale with CPU, but cap reasonably
+  const streamGoroutines = Math.max(4, Math.min(cpuCores, 32));
+  el('badgerNumGoroutines').value = streamGoroutines;
+  rationale.push(`Stream goroutines set to ${streamGoroutines} (based on ${cpuCores} CPU cores, capped at 32).`);
+
+  // Memtable size: larger for write-heavy, smaller for read-heavy (save RAM for cache)
+  let memtableMB;
+  if (ramGB >= 64 && writePct >= 50) {
+    memtableMB = 128;
+    rationale.push('Memtable size set to 128MB — ample RAM and write-heavy workload benefits from larger memtables (fewer L0 flushes).');
+  } else if (ramGB >= 32) {
+    memtableMB = 64;
+  } else {
+    memtableMB = 32;
+    rationale.push('Memtable size set to 32MB — limited RAM, keeping memtables small to leave room for cache.');
+  }
+  el('badgerMemtableSize').value = memtableMB;
+
+  // NumMemtables: more for write-heavy to buffer more before stalling
+  const numMemtables = writePct >= 60 ? 7 : 5;
+  el('badgerNumMemtables').value = numMemtables;
+  if (numMemtables !== 5) {
+    rationale.push(`Num memtables set to ${numMemtables} — write-heavy workload benefits from more buffering before stall.`);
+  }
+
+  // NumCompactors: scale with CPU for write-heavy
+  const numCompactors = writePct >= 60
+    ? Math.max(4, Math.min(Math.floor(cpuCores / 2), 16))
+    : Math.max(2, Math.min(Math.floor(cpuCores / 4), 8));
+  el('badgerNumCompactors').value = numCompactors;
+  rationale.push(`Num compactors set to ${numCompactors} — scaled for ${profileName.toLowerCase()} workload with ${cpuCores} cores.`);
+
+  // Base table/level sizes
+  const baseTableMB = ramGB >= 64 ? 4 : 2;
+  const baseLevelMB = ramGB >= 64 ? 20 : 10;
+  el('badgerBaseTableSize').value = baseTableMB;
+  el('badgerBaseLevelSize').value = baseLevelMB;
+
+  // L0 stall/compact thresholds: write-heavy needs more headroom
+  if (writePct >= 60) {
+    el('badgerL0Stall').value = 20;
+    el('badgerL0Compact').value = 7;
+    rationale.push('L0 stall threshold raised to 20 and compact threshold to 7 — write-heavy workload needs compaction headroom.');
+  } else {
+    el('badgerL0Stall').value = 15;
+    el('badgerL0Compact').value = 5;
+  }
+
+  // Block size: smaller for random reads, larger for sequential/range
+  el('badgerBlockSize').value = readPct >= 70 ? 4 : 4;
+
+  // Bloom filter: tighter for read-heavy (less wasted I/O)
+  if (readPct >= 70 && ramGB >= 32) {
+    el('badgerBloomFP').value = 0.005;
+    rationale.push('Bloom false positive rate set to 0.005 — read-heavy workload benefits from fewer false reads (costs more RAM for bloom filters).');
+  } else {
+    el('badgerBloomFP').value = 0.01;
+  }
+
+  // ── Cache tuning ──
+  // Allocate ~50-70% of RAM for cache depending on workload
+  const cacheFraction = readPct >= 70 ? 0.70 : writePct >= 70 ? 0.50 : 0.60;
+  const cacheMB = Math.max(256, Math.round(ramGB * 1024 * cacheFraction));
+  // Account for memtable overhead: numMemtables * memtableMB * 2 (active + immutable)
+  const memtableOverheadMB = numMemtables * memtableMB * 2;
+  const effectiveMaxCacheMB = Math.max(256, ramGB * 1024 - memtableOverheadMB - 1024); // leave 1GB for OS/other
+  const finalCacheMB = Math.min(cacheMB, effectiveMaxCacheMB);
+
+  el('cacheSizeMB').value = finalCacheMB;
+  el('cacheSizeMB').max = Math.round(ramGB * 1024 * 0.85);
+  el('cacheMaxLabel').textContent = Math.round(ramGB * 1024 * 0.85) + ' MB';
+  rationale.push(`Cache set to ${finalCacheMB}MB (${Math.round(cacheFraction * 100)}% of ${ramGB}GB RAM) — ${profileName.toLowerCase()} workload.`);
+
+  // Cache percentages: read-heavy favors PostingList cache, write-heavy favors block cache
+  let plPct, blockPct, indexPct;
+  if (readPct >= 75) {
+    plPct = 55; blockPct = 30; indexPct = 15;
+    rationale.push('Cache allocation favors PostingList cache (55%) — read-heavy workload benefits from cached query results.');
+  } else if (writePct >= 60) {
+    plPct = 30; blockPct = 45; indexPct = 25;
+    rationale.push('Cache allocation favors Block cache (45%) and Index cache (25%) — write-heavy workload needs faster compaction reads.');
+  } else {
+    plPct = 40; blockPct = 40; indexPct = 20;
+  }
+  el('plCachePct').value = plPct;
+  el('blockCachePct').value = blockPct;
+  el('indexCachePct').value = indexPct;
+
+  // remove-on-update for write-heavy
+  if (writePct >= 70) {
+    el('cacheRemoveOnUpdate').checked = true;
+    rationale.push('Cache remove-on-update enabled — ~14% faster writes for write-heavy workload.');
+  } else {
+    el('cacheRemoveOnUpdate').checked = false;
+  }
+
+  // ── Raft tuning (Alpha) ──
+  if (writePct >= 70) {
+    el('raftPendingProposals').value = 512;
+    rationale.push('Raft pending proposals raised to 512 — write-heavy workload needs more concurrent mutation capacity.');
+  } else {
+    el('raftPendingProposals').value = 256;
+  }
+
+  el('rationaleList').innerHTML = rationale.map(r => `<li>${r}</li>`).join('');
+  updateOutput();
+}
+
+// ── Build superflag string ──────────────────────────────────────────────────
+function sf(pairs) {
+  return pairs.map(([k, v]) => `${k}=${v}`).join('; ');
+}
+
+function ne(val, def) {
+  // Returns true if val differs from default
+  if (typeof def === 'boolean') return val !== def;
+  if (typeof def === 'number') return Number(val) !== def;
+  return String(val) !== String(def);
+}
+
+// ── Generate commands ───────────────────────────────────────────────────────
+function updateOutput() {
+  updateCacheLabels();
+  const args = [];
+
+  // Network
+  const zero = el('alphaZero').value.trim();
+  if (zero && ne(zero, ALPHA_DEFAULTS.zero)) args.push(`--zero "${zero}"`);
+  const my = el('alphaMy').value.trim();
+  if (my) args.push(`--my "${my}"`);
+  const offset = intVal('alphaPortOffset');
+  if (ne(offset, ALPHA_DEFAULTS.port_offset)) args.push(`--port_offset ${offset}`);
+
+  // Directories
+  const postings = el('alphaPostings').value.trim();
+  if (ne(postings, ALPHA_DEFAULTS.postings)) args.push(`-p "${postings}"`);
+  const wal = el('alphaWal').value.trim();
+  if (ne(wal, ALPHA_DEFAULTS.wal)) args.push(`-w "${wal}"`);
+  const tmp = el('alphaTemp').value.trim();
+  if (ne(tmp, ALPHA_DEFAULTS.tmp)) args.push(`--tmp "${tmp}"`);
+  const exp = el('alphaExport').value.trim();
+  if (ne(exp, ALPHA_DEFAULTS.export)) args.push(`--export "${exp}"`);
+
+  // Badger
+  const badgerParts = [];
+  const compression = el('badgerCompression').value;
+  if (ne(compression, ALPHA_DEFAULTS.badger.compression)) badgerParts.push(['compression', compression]);
+  const ng = intVal('badgerNumGoroutines');
+  if (ne(ng, ALPHA_DEFAULTS.badger.numgoroutines)) badgerParts.push(['numgoroutines', ng]);
+
+  // Advanced badger options — only include if non-default
+  const memtable = intVal('badgerMemtableSize');
+  if (memtable !== 64) badgerParts.push(['memtablesize', memtable * 1024 * 1024]);
+  const numMem = intVal('badgerNumMemtables');
+  if (numMem !== 5) badgerParts.push(['nummemtables', numMem]);
+  const baseTable = intVal('badgerBaseTableSize');
+  if (baseTable !== 2) badgerParts.push(['basetablesize', baseTable * 1024 * 1024]);
+  const baseLevel = intVal('badgerBaseLevelSize');
+  if (baseLevel !== 10) badgerParts.push(['baselevelsize', baseLevel * 1024 * 1024]);
+  const numComp = intVal('badgerNumCompactors');
+  if (numComp !== 4) badgerParts.push(['numcompactors', numComp]);
+  const blockSize = intVal('badgerBlockSize');
+  if (blockSize !== 4) badgerParts.push(['blocksize', blockSize * 1024]);
+  const bloomFP = parseFloat(el('badgerBloomFP').value);
+  if (bloomFP !== 0.01) badgerParts.push(['bloomfalsepositive', bloomFP]);
+  const l0Stall = intVal('badgerL0Stall');
+  if (l0Stall !== 15) badgerParts.push(['numlevelzerotablesstall', l0Stall]);
+  const l0Compact = intVal('badgerL0Compact');
+  if (l0Compact !== 5) badgerParts.push(['numlevelzerotables', l0Compact]);
+  const syncWrites = el('badgerSyncWrites').checked;
+  if (syncWrites) badgerParts.push(['syncwrites', true]);
+
+  if (badgerParts.length > 0) args.push(`--badger "${sf(badgerParts)}"`);
+
+  // Cache
+  const cacheParts = [];
+  const cacheMB = intVal('cacheSizeMB');
+  if (ne(cacheMB, ALPHA_DEFAULTS.cache['size-mb'])) cacheParts.push(['size-mb', cacheMB]);
+  const pctStr = `${intVal('plCachePct')},${intVal('blockCachePct')},${intVal('indexCachePct')}`;
+  if (ne(pctStr, ALPHA_DEFAULTS.cache.percentage)) cacheParts.push(['percentage', pctStr]);
+  const rou = el('cacheRemoveOnUpdate').checked;
+  if (ne(rou, ALPHA_DEFAULTS.cache['remove-on-update'])) cacheParts.push(['remove-on-update', rou]);
+  if (cacheParts.length > 0) args.push(`--cache "${sf(cacheParts)}"`);
+
+  // Raft
+  const raftParts = [];
+  if (el('raftLearner').checked) raftParts.push(['learner', true]);
+  const snapEntries = intVal('raftSnapshotEntries');
+  if (ne(snapEntries, ALPHA_DEFAULTS.raft['snapshot-after-entries'])) raftParts.push(['snapshot-after-entries', snapEntries]);
+  const snapDur = el('raftSnapshotDuration').value.trim();
+  if (ne(snapDur, ALPHA_DEFAULTS.raft['snapshot-after-duration'])) raftParts.push(['snapshot-after-duration', snapDur]);
+  const pendProp = intVal('raftPendingProposals');
+  if (ne(pendProp, ALPHA_DEFAULTS.raft['pending-proposals'])) raftParts.push(['pending-proposals', pendProp]);
+  if (raftParts.length > 0) args.push(`--raft "${sf(raftParts)}"`);
+
+  // Security
+  const secParts = [];
+  const token = el('securityToken').value.trim();
+  if (token) secParts.push(['token', token]);
+  const wl = el('securityWhitelist').value.trim();
+  if (wl) secParts.push(['whitelist', wl]);
+  if (secParts.length > 0) args.push(`--security "${sf(secParts)}"`);
+
+  // Limits
+  const limParts = [];
+  const qe = intVal('limitQueryEdge');
+  if (ne(qe, ALPHA_DEFAULTS.limit['query-edge'])) limParts.push(['query-edge', qe]);
+  const nn = intVal('limitNormalizeNode');
+  if (ne(nn, ALPHA_DEFAULTS.limit['normalize-node'])) limParts.push(['normalize-node', nn]);
+  const mut = el('limitMutations').value;
+  if (ne(mut, ALPHA_DEFAULTS.limit.mutations)) limParts.push(['mutations', mut]);
+  const mnq = intVal('limitMutationsNquad');
+  if (ne(mnq, ALPHA_DEFAULTS.limit['mutations-nquad'])) limParts.push(['mutations-nquad', mnq]);
+  if (el('limitDisallowDrop').checked) limParts.push(['disallow-drop', true]);
+  const mpq = intVal('limitMaxPending');
+  if (ne(mpq, ALPHA_DEFAULTS.limit['max-pending-queries'])) limParts.push(['max-pending-queries', mpq]);
+  const qt = el('limitQueryTimeout').value.trim();
+  if (ne(qt, ALPHA_DEFAULTS.limit['query-timeout'])) limParts.push(['query-timeout', qt]);
+  const mr = intVal('limitMaxRetries');
+  if (ne(mr, ALPHA_DEFAULTS.limit['max-retries'])) limParts.push(['max-retries', mr]);
+  const ta = el('limitTxnAbort').value.trim();
+  if (ne(ta, ALPHA_DEFAULTS.limit['txn-abort-after'])) limParts.push(['txn-abort-after', ta]);
+  if (limParts.length > 0) args.push(`--limit "${sf(limParts)}"`);
+
+  // Other
+  const survive = el('alphaSurvive').value;
+  if (ne(survive, ALPHA_DEFAULTS.survive)) args.push(`--survive ${survive}`);
+  if (!el('alphaBindall').checked) args.push('--bindall=false');
+  if (!el('alphaTelemetry').checked) args.push('--telemetry "reports=false"');
+  if (el('alphaMcp').checked) args.push('--mcp');
+
+  el('outputAlpha').value = 'dgraph alpha' + (args.length ? ' \\\n  ' + args.join(' \\\n  ') : '');
+
+  // ── Zero command ──
+  const zArgs = [];
+  const zMy = el('zeroMy').value.trim();
+  if (zMy) zArgs.push(`--my "${zMy}"`);
+  const zPeer = el('zeroPeer').value.trim();
+  if (zPeer) zArgs.push(`--peer "${zPeer}"`);
+  const zOff = intVal('zeroPortOffset');
+  if (ne(zOff, ZERO_DEFAULTS.port_offset)) zArgs.push(`--port_offset ${zOff}`);
+  const zWal = el('zeroWal').value.trim();
+  if (ne(zWal, ZERO_DEFAULTS.wal)) zArgs.push(`-w "${zWal}"`);
+  const zRep = el('zeroReplicas').value;
+  if (ne(parseInt(zRep), ZERO_DEFAULTS.replicas)) zArgs.push(`--replicas ${zRep}`);
+  const zRebal = el('zeroRebalance').value.trim();
+  if (ne(zRebal, ZERO_DEFAULTS.rebalance_interval)) zArgs.push(`--rebalance_interval ${zRebal}`);
+  const zCid = el('zeroCid').value.trim();
+  if (zCid) zArgs.push(`--cid "${zCid}"`);
+
+  // Raft
+  const zRaftParts = [];
+  const zIdx = el('zeroRaftIdx').value.trim();
+  if (zIdx) zRaftParts.push(['idx', zIdx]);
+  if (el('zeroRaftLearner').checked) zRaftParts.push(['learner', true]);
+  if (zRaftParts.length > 0) zArgs.push(`--raft "${sf(zRaftParts)}"`);
+
+  // Limits
+  const zLimParts = [];
+  const zUid = intVal('zeroUidLease');
+  if (ne(zUid, ZERO_DEFAULTS.limit['uid-lease'])) zLimParts.push(['uid-lease', zUid]);
+  const zRefill = el('zeroRefillInterval').value.trim();
+  if (ne(zRefill, ZERO_DEFAULTS.limit['refill-interval'])) zLimParts.push(['refill-interval', zRefill]);
+  if (el('zeroDisableAdminHttp').checked) zLimParts.push(['disable-admin-http', true]);
+  if (zLimParts.length > 0) zArgs.push(`--limit "${sf(zLimParts)}"`);
+
+  // Other
+  const zSurv = el('zeroSurvive').value;
+  if (ne(zSurv, ZERO_DEFAULTS.survive)) zArgs.push(`--survive ${zSurv}`);
+  if (!el('zeroBindall').checked) zArgs.push('--bindall=false');
+  if (!el('zeroTelemetry').checked) zArgs.push('--telemetry "reports=false"');
+
+  el('outputZero').value = 'dgraph zero' + (zArgs.length ? ' \\\n  ' + zArgs.join(' \\\n  ') : '');
+
+  // Auto-size textareas
+  autoSizeTextarea('outputAlpha');
+  autoSizeTextarea('outputZero');
+}
+
+function updateCacheLabels() {
+  const cacheMB = intVal('cacheSizeMB');
+  el('cacheSizeLabel').textContent = cacheMB >= 1024 ? (cacheMB / 1024).toFixed(1) + ' GB' : cacheMB + ' MB';
+  const pl = intVal('plCachePct'), bl = intVal('blockCachePct'), ix = intVal('indexCachePct');
+  el('plCachePctLabel').textContent = pl;
+  el('blockCachePctLabel').textContent = bl;
+  el('indexCachePctLabel').textContent = ix;
+  el('plCacheMB').textContent = Math.round(pl * cacheMB / 100) + ' MB';
+  el('blockCacheMB').textContent = Math.round(bl * cacheMB / 100) + ' MB';
+  el('indexCacheMB').textContent = Math.round(ix * cacheMB / 100) + ' MB';
+
+  const sum = pl + bl + ix;
+  const warn = el('cachePctWarning');
+  if (sum !== 100) {
+    warn.textContent = `Cache percentages sum to ${sum}% (must be 100%)`;
+    warn.className = 'text-xs mt-2 text-red-600 font-medium';
+  } else {
+    warn.textContent = '';
+    warn.className = 'text-xs mt-2';
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+function intVal(id) { return parseInt(el(id).value) || 0; }
+function clampInt(id, min, max) {
+  let v = parseInt(el(id).value) || min;
+  v = Math.max(min, Math.min(max, v));
+  el(id).value = v;
+  return v;
+}
+function autoSizeTextarea(id) {
+  const ta = el(id);
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(48, ta.scrollHeight + 4) + 'px';
+}
+
+function copyAll() {
+  const text = el('outputAlpha').value + '\n\n' + el('outputZero').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy All'; }, 1500);
+  });
+}
+
+// ── Wire up all inputs ──────────────────────────────────────────────────────
+function wireInputs() {
+  // Hardware inputs trigger full auto-tune
+  ['cpuCores', 'ramGB', 'diskGB', 'readPct'].forEach(id => {
+    el(id).addEventListener('input', autoTune);
+  });
+
+  // All other inputs just rebuild the command (no auto-tune overwrite)
+  const allInputIds = [
+    'alphaZero', 'alphaMy', 'alphaPortOffset', 'alphaPostings', 'alphaWal', 'alphaTemp', 'alphaExport',
+    'badgerCompression', 'badgerNumGoroutines', 'badgerMemtableSize', 'badgerNumMemtables',
+    'badgerBaseTableSize', 'badgerBaseLevelSize', 'badgerNumCompactors', 'badgerBlockSize',
+    'badgerBloomFP', 'badgerL0Stall', 'badgerL0Compact', 'badgerSyncWrites',
+    'cacheSizeMB', 'plCachePct', 'blockCachePct', 'indexCachePct', 'cacheRemoveOnUpdate',
+    'raftSnapshotEntries', 'raftSnapshotDuration', 'raftPendingProposals', 'raftLearner',
+    'limitQueryEdge', 'limitNormalizeNode', 'limitMutations', 'limitMutationsNquad',
+    'limitMaxPending', 'limitQueryTimeout', 'limitMaxRetries', 'limitTxnAbort', 'limitDisallowDrop',
+    'securityToken', 'securityWhitelist',
+    'alphaSurvive', 'alphaBindall', 'alphaTelemetry', 'alphaMcp',
+    'zeroMy', 'zeroPeer', 'zeroPortOffset', 'zeroWal', 'zeroReplicas', 'zeroRebalance', 'zeroCid',
+    'zeroRaftIdx', 'zeroRaftLearner', 'zeroUidLease', 'zeroRefillInterval', 'zeroDisableAdminHttp',
+    'zeroSurvive', 'zeroBindall', 'zeroTelemetry'
+  ];
+  allInputIds.forEach(id => {
+    const elem = el(id);
+    if (elem) {
+      elem.addEventListener('input', updateOutput);
+      elem.addEventListener('change', updateOutput);
+    }
+  });
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+wireInputs();
+autoTune();
+</script>
+</body>
+</html>
