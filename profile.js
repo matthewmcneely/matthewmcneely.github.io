@@ -1287,6 +1287,11 @@ var user = {
       "remote": true,
       "accomplishments": [
         {
+          "id": "0x1a3a99",
+          "displayPosition": 1,
+          "description": "For Istari Digital, Principal Maintainer of Dgraph and associated repos; created security-related features for Istari's private fork of Dgraph for the security, defense and aerospace industries"
+        },
+        {
           "id": "0x1a3a33",
           "displayPosition": 1,
           "description": "For Dgraph (Dgraph Labs, Hypermode, Istari Digital), helped new engineering team, added functionality, fixed issues, helped customers with technical issues, conducted training [Go, python, RDF, JSON, Dgraph, DQL, GraphQL]"
@@ -1609,7 +1614,7 @@ var user = {
   "availabilities": [
     {
       "id": "0x125d8",
-      "description": "Interim/Fractional CTO; Golang and python programming; graph database design; knowledge graphs; dgraph; MVPs/prototypes, langchain/LLMs, vector stores",
+      "description": "Interim/Fractional CTO; Golang and python programming; graph database design; Dgraph; knowledge graphs; dgraph; MVPs/prototypes, GenAI stuff",
       "active": true,
       "startDate": "2025-12-01T12:00:00Z",
       "employmentType": "CORP_TO_CORP",
